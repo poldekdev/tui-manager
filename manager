@@ -1,0 +1,87 @@
+#!/bin/bash
+# TUI-Manager
+# Developed & maintained by: poldekdev
+# https://github.com/poldekdev/tui-manager
+
+update_and_upgrade(){
+	echo "[INFO] Started upgrade task"
+	apt update
+	DEBIAN_FRONTEND=noninteractive apt upgrade -y
+}
+upgrade_and_install(){
+	update_and_upgrade
+	echo "[INFO] Started install task"
+	DEBIAN_FRONTEND=noninteractive apt install "$@" -y
+}
+install_node(){
+	update_and_upgrade
+	DEBIAN_FRONTEND=noninteractive apt install wget -y
+	echo "[INFO] Installing NVM (Node Version Manager)"
+	wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+	export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+	echo "[INFO] Installing latest Node.js version"
+	nvm install v22.17.1
+}
+install_cloudflared(){
+	echo "[INFO] Adding cloudflared repositories"
+	sudo mkdir -p --mode=0755 /usr/share/keyrings
+	curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+	echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+	update_and_upgrade
+	echo "[INFO] Started install task"
+	DEBIAN_FRONTEND=noninteractive apt install cloudflared -y
+}
+install_essentials(){
+	update_and_upgrade
+	echo "[INFO] Started installing essentials"
+	DEBIAN_FRONTEND=noninteractive apt install nano curl python3 python3-pip wget git -y
+}
+install_python(){
+	echo "[INFO] Started installing Python"
+	upgrade_and_install python3 python3-pip
+}
+sysinfo(){
+    echo "[INFO] Gathering data, please wait"
+    data=$(curl -s http://ip-api.com/json/)
+    ip=$(echo "$data" | jq -r '.query')
+    cc=$(echo "$data" | jq -r '.countryCode')
+    cn=$(echo "$data" | jq -r '.country')
+    city=$(echo "$data" | jq -r '.city')
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+    else
+        NAME="Unknown OS"
+        VERSION_ID=""
+        VERSION_CODENAME=""
+    fi
+    echo "System information"
+    echo "IP Address: $ip"
+    echo "Location: $cc ($cn), $city"
+    echo "Operating system: $NAME $VERSION_ID ($VERSION_CODENAME)"
+}
+
+
+clear
+figlet TUI-Manager
+echo "Developed and maintained by poldekdev"
+echo "https://github.com/poldekdev/tui-manager"
+echo "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+echo "[1] Upgrade your OS"
+echo "[2] Install Node.JS"
+echo "[3] Install cloudflared (Cloudflare Zero Trust client)"
+echo "[4] Install essential packages (usefull for minimised systems)"
+echo "[5] Install Python 3 (and PyPi)"
+echo "[6] System Information"
+echo "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+echo "[INPUT] Enter your choice"
+read input
+case "$input" in
+	"1") update_and_upgrade ;;
+	"2") install_node ;;
+	"3") install_cloudflared ;;
+	"4") install_essentials ;;
+	"5") install_python ;;
+	"6") sysinfo ;;
+	*) echo "[ERR] Not valid option"&& exit ;;
+esac
