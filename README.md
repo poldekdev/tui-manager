@@ -1,10 +1,10 @@
 # tui-manager
 Easy to use Terminal UI tool to manage your Linux installation
 ## Features:
-[x] System upgrading
-[x] Easy to use TerminalUI
-[x] System information
-[x] Built-in installers
+- [x] System upgrading
+- [x] Easy to use TerminalUI
+- [x] System information
+- [x] Built-in installers
 ## How to install?
 In your terminal, run this command
 ```
